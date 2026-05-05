@@ -10,13 +10,17 @@ type AnalysisResponse = {
   recommended_actions: string[];
 };
 
+type AnalyzerMode = "local" | "ai";
+
 const sampleLog = `Jan 10 12:01:02 server sshd[1234]: Failed password for root from 185.23.44.10 port 52231 ssh2
 Jan 10 12:01:05 server sshd[1235]: Failed password for root from 185.23.44.10 port 52232 ssh2
-Jan 10 12:01:09 server sshd[1236]: Invalid user admin from 185.23.44.10`;
+Jan 10 12:01:09 server sshd[1236]: Invalid user admin from 185.23.44.10
+Jan 10 12:01:12 server sshd[1237]: Failed password for root from 185.23.44.10 port 52233 ssh2`;
 
 export default function Home() {
   const [logText, setLogText] = useState("");
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
+  const [analyzerMode, setAnalyzerMode] = useState<AnalyzerMode>("local");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -35,7 +39,10 @@ export default function Home() {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
-      const response = await fetch(`${apiUrl}/api/analyze-log`, {
+      const endpoint =
+        analyzerMode === "ai" ? "/api/analyze-log-ai" : "/api/analyze-log";
+
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,15 +53,22 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("The backend returned an error.");
+        const errorData = await response.json().catch(() => null);
+
+        throw new Error(
+          errorData?.detail ?? "The backend returned an error."
+        );
       }
 
       const data: AnalysisResponse = await response.json();
       setAnalysis(data);
     } catch (error) {
-      setErrorMessage(
-        "Could not connect to the backend. Make sure FastAPI is running on port 8000."
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not connect to the backend.";
+
+      setErrorMessage(message);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -83,6 +97,12 @@ export default function Home() {
     }
 
     return "border-green-500 bg-green-50 text-green-700";
+  }
+
+  function getAnalyzerLabel() {
+    return analyzerMode === "ai"
+      ? "AI Analyzer powered by Groq"
+      : "Local rule-based analyzer";
   }
 
   return (
@@ -125,6 +145,52 @@ export default function Home() {
               </button>
             </div>
 
+            <div className="mb-4 rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <p className="mb-3 text-sm font-medium text-slate-300">
+                Analyzer Mode
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAnalyzerMode("local");
+                    setAnalysis(null);
+                    setErrorMessage("");
+                  }}
+                  className={`rounded-lg border px-4 py-3 text-left transition ${
+                    analyzerMode === "local"
+                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-300"
+                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  <p className="font-semibold">Local Analyzer</p>
+                  <p className="text-xs text-slate-400">
+                    Fast rule-based analysis
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAnalyzerMode("ai");
+                    setAnalysis(null);
+                    setErrorMessage("");
+                  }}
+                  className={`rounded-lg border px-4 py-3 text-left transition ${
+                    analyzerMode === "ai"
+                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-300"
+                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                  }`}
+                >
+                  <p className="font-semibold">AI Analyzer</p>
+                  <p className="text-xs text-slate-400">
+                    LLM analysis with Groq
+                  </p>
+                </button>
+              </div>
+            </div>
+
             <textarea
               value={logText}
               onChange={(event) => setLogText(event.target.value)}
@@ -144,14 +210,18 @@ export default function Home() {
               disabled={isLoading}
               className="mt-4 w-full rounded-xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? "Analyzing..." : "Analyze Log"}
+              {isLoading
+                ? "Analyzing..."
+                : `Analyze Log with ${
+                    analyzerMode === "ai" ? "AI" : "Local Rules"
+                  }`}
             </button>
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-xl">
             <h2 className="text-xl font-semibold">Analysis Result</h2>
             <p className="mb-4 text-sm text-slate-400">
-              Results from the local rule-based analyzer.
+              Current mode: {getAnalyzerLabel()}.
             </p>
 
             {!analysis && (

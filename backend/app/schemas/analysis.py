@@ -1,4 +1,9 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+SeverityLevel = Literal["low", "medium", "high", "critical"]
 
 
 class LogAnalysisRequest(BaseModel):
@@ -10,7 +15,7 @@ class LogAnalysisRequest(BaseModel):
 
 
 class LogAnalysisResponse(BaseModel):
-    severity: str
+    severity: SeverityLevel
     summary: str
     detected_patterns: list[str]
     evidence: list[str]

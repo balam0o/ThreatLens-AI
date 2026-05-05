@@ -2,7 +2,11 @@
 __pycache__/
 *.pyc
 .venv/
+
+# Environment variables
 .env
+.env.*
+!.env.example
 
 # Node / Next.js
 node_modules/
