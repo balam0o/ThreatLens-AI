@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type AnalysisResponse = {
@@ -109,6 +110,12 @@ export default function Home() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <header className="space-y-4">
+          <Link
+            href="/incidents"
+            className="inline-flex w-fit rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+          >
+            View Incident History
+          </Link>
           <div className="inline-flex rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-1 text-sm text-cyan-300">
             AI-powered defensive cybersecurity
           </div>

@@ -1,0 +1,214 @@
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+type IncidentDetail = {
+  id: number;
+  analyzer_mode: "local" | "ai";
+  severity: "low" | "medium" | "high" | "critical";
+  summary: string;
+  detected_patterns: string[];
+  evidence: string[];
+  recommended_actions: string[];
+  created_at: string;
+  source_log: string;
+};
+
+export default function IncidentDetailPage() {
+  const params = useParams<{ id: string }>();
+
+  const [incident, setIncident] = useState<IncidentDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function fetchIncident() {
+      try {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+
+        const response = await fetch(`${apiUrl}/api/incidents/${params.id}`);
+
+        if (!response.ok) {
+          throw new Error("Could not load incident detail.");
+        }
+
+        const data: IncidentDetail = await response.json();
+        setIncident(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unexpected error while loading incident detail.";
+
+        setErrorMessage(message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchIncident();
+  }, [params.id]);
+
+  function getSeverityStyles(severity: string) {
+    if (severity === "critical") {
+      return "border-red-500 bg-red-500/10 text-red-300";
+    }
+
+    if (severity === "high") {
+      return "border-orange-500 bg-orange-500/10 text-orange-300";
+    }
+
+    if (severity === "medium") {
+      return "border-yellow-500 bg-yellow-500/10 text-yellow-300";
+    }
+
+    return "border-green-500 bg-green-500/10 text-green-300";
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
+        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-2 text-sm text-cyan-300">ThreatLens AI</p>
+            <h1 className="text-4xl font-bold tracking-tight">
+              Incident Detail
+            </h1>
+            <p className="mt-2 text-slate-400">
+              Full saved analysis result and original source logs.
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <Link
+              href="/incidents"
+              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+            >
+              Back to History
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+            >
+              New Analysis
+            </Link>
+          </div>
+        </header>
+
+        {isLoading && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-slate-400">
+            Loading incident...
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-red-300">
+            {errorMessage}
+          </div>
+        )}
+
+        {incident && (
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+            <section className="space-y-6">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${getSeverityStyles(
+                      incident.severity
+                    )}`}
+                  >
+                    {incident.severity}
+                  </span>
+
+                  <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs uppercase text-slate-300">
+                    {incident.analyzer_mode}
+                  </span>
+                </div>
+
+                <h2 className="text-2xl font-bold">Incident #{incident.id}</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Created at: {incident.created_at}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h3 className="mb-3 text-lg font-semibold">Summary</h3>
+                <p className="text-slate-300">{incident.summary}</p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h3 className="mb-3 text-lg font-semibold">
+                  Detected Patterns
+                </h3>
+
+                {incident.detected_patterns.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {incident.detected_patterns.map((pattern) => (
+                      <span
+                        key={pattern}
+                        className="rounded-full bg-slate-800 px-3 py-1 text-sm text-cyan-300"
+                      >
+                        {pattern}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    No patterns detected.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h3 className="mb-3 text-lg font-semibold">
+                  Recommended Actions
+                </h3>
+
+                <ul className="list-inside list-disc space-y-2 text-slate-300">
+                  {incident.recommended_actions.map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h3 className="mb-3 text-lg font-semibold">Evidence</h3>
+
+                {incident.evidence.length > 0 ? (
+                  <ul className="space-y-3">
+                    {incident.evidence.map((item, index) => (
+                      <li
+                        key={`${item}-${index}`}
+                        className="rounded-xl bg-slate-950 p-4 font-mono text-sm text-slate-300"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    No evidence extracted.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+                <h3 className="mb-3 text-lg font-semibold">Original Logs</h3>
+
+                <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap rounded-xl bg-slate-950 p-4 font-mono text-sm text-slate-300">
+                  {incident.source_log}
+                </pre>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
