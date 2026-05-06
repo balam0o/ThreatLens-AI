@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 
 type AnalysisResponse = {
+  id?: number;
+  analyzer_mode?: "local" | "ai";
+  created_at?: string;
   severity: string;
   summary: string;
   detected_patterns: string[];
@@ -22,6 +25,7 @@ export default function Home() {
   const [logText, setLogText] = useState("");
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [analyzerMode, setAnalyzerMode] = useState<AnalyzerMode>("local");
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -78,8 +82,47 @@ export default function Home() {
 
   function handleUseSampleLog() {
     setLogText(sampleLog);
+    setUploadedFileName("");
     setAnalysis(null);
     setErrorMessage("");
+  }
+
+  async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedExtensions = [".log", ".txt"];
+    const fileName = file.name.toLowerCase();
+    const isAllowedFile = allowedExtensions.some((extension) =>
+      fileName.endsWith(extension)
+    );
+
+    if (!isAllowedFile) {
+      setErrorMessage("Only .log and .txt files are supported.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const content = await file.text();
+
+      if (!content.trim()) {
+        setErrorMessage("The selected file is empty.");
+        event.target.value = "";
+        return;
+      }
+
+      setLogText(content);
+      setUploadedFileName(file.name);
+      setAnalysis(null);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage("Could not read the selected file.");
+      console.error(error);
+    }
   }
 
   function getSeverityStyles(severity: string) {
@@ -110,12 +153,6 @@ export default function Home() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
         <header className="space-y-4">
-          <Link
-            href="/incidents"
-            className="inline-flex w-fit rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-          >
-            View Incident History
-          </Link>
           <div className="inline-flex rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-1 text-sm text-cyan-300">
             AI-powered defensive cybersecurity
           </div>
@@ -130,6 +167,13 @@ export default function Home() {
               structured security analysis with severity, evidence, and
               recommended defensive actions.
             </p>
+
+            <Link
+              href="/incidents"
+              className="inline-flex w-fit rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+            >
+              View Incident History
+            </Link>
           </div>
         </header>
 
@@ -139,7 +183,8 @@ export default function Home() {
               <div>
                 <h2 className="text-xl font-semibold">Log Input</h2>
                 <p className="text-sm text-slate-400">
-                  Paste raw logs or load the sample SSH brute-force attempt.
+                  Paste raw logs, upload a file, or load the sample SSH
+                  brute-force attempt.
                 </p>
               </div>
 
@@ -198,6 +243,35 @@ export default function Home() {
               </div>
             </div>
 
+            <div className="mb-4 rounded-xl border border-slate-800 bg-slate-950 p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-300">
+                    Upload Log File
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Supported formats: .log and .txt
+                  </p>
+                </div>
+
+                <label className="cursor-pointer rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
+                  Choose file
+                  <input
+                    type="file"
+                    accept=".log,.txt"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {uploadedFileName && (
+                <p className="mt-3 rounded-lg bg-slate-900 px-3 py-2 text-xs text-cyan-300">
+                  Loaded file: {uploadedFileName}
+                </p>
+              )}
+            </div>
+
             <textarea
               value={logText}
               onChange={(event) => setLogText(event.target.value)}
@@ -233,7 +307,8 @@ export default function Home() {
 
             {!analysis && (
               <div className="flex min-h-80 items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6 text-center text-slate-500">
-                No analysis yet. Paste logs and run the analyzer.
+                No analysis yet. Paste logs, upload a file, and run the
+                analyzer.
               </div>
             )}
 
@@ -249,6 +324,15 @@ export default function Home() {
                     {analysis.severity}
                   </p>
                 </div>
+
+                {analysis.id && (
+                  <Link
+                    href={`/incidents/${analysis.id}`}
+                    className="inline-flex w-full justify-center rounded-xl border border-cyan-400/50 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
+                  >
+                    View Saved Incident #{analysis.id}
+                  </Link>
+                )}
 
                 <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
                   <h3 className="mb-2 font-semibold">Summary</h3>
