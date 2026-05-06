@@ -148,3 +148,15 @@ def _row_to_incident(
         incident["source_log"] = row["source_log"]
 
     return incident
+
+def delete_incident_by_id(incident_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM incidents
+            WHERE id = ?
+            """,
+            (incident_id,),
+        )
+
+        return cursor.rowcount > 0

@@ -2,7 +2,12 @@ import traceback
 
 from fastapi import APIRouter, HTTPException
 
-from app.db.database import create_incident, get_all_incidents, get_incident_by_id
+from app.db.database import (
+    create_incident,
+    delete_incident_by_id,
+    get_all_incidents,
+    get_incident_by_id,
+)
 from app.schemas.analysis import (
     IncidentDetailResponse,
     IncidentResponse,
@@ -73,3 +78,18 @@ def get_incident(incident_id: int):
         )
 
     return incident
+
+@router.delete("/incidents/{incident_id}")
+def delete_incident(incident_id: int):
+    was_deleted = delete_incident_by_id(incident_id)
+
+    if not was_deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Incident not found.",
+        )
+
+    return {
+        "message": "Incident deleted successfully.",
+        "incident_id": incident_id,
+    }
