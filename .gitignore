@@ -24,3 +24,9 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# SQLite database
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
