@@ -168,12 +168,21 @@ export default function Home() {
               recommended defensive actions.
             </p>
 
-            <Link
-              href="/incidents"
-              className="inline-flex w-fit rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-            >
-              View Incident History
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/incidents"
+                className="inline-flex w-fit rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              >
+                View Incident History
+              </Link>
+
+              <Link
+                href="/dashboard"
+                className="inline-flex w-fit rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                View Dashboard
+              </Link>
+            </div>
           </div>
         </header>
 

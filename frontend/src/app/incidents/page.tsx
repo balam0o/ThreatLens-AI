@@ -152,12 +152,21 @@ export default function IncidentsPage() {
             </p>
           </div>
 
-          <Link
-            href="/"
-            className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-          >
-            Back to Analyzer
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/dashboard"
+              className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+            >
+              Dashboard
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+            >
+              Back to Analyzer
+            </Link>
+          </div>
         </header>
 
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
