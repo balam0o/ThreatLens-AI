@@ -2,11 +2,11 @@
 
 ThreatLens AI is an AI-powered defensive cybersecurity dashboard for analyzing logs and detecting suspicious activity.
 
-The application supports both local rule-based analysis and LLM-powered analysis with Groq. It classifies log events by severity, extracts evidence, identifies suspicious patterns, and recommends defensive actions.
+The application supports both local rule-based analysis and LLM-powered analysis with Groq. It classifies log events by severity, extracts evidence, identifies suspicious patterns, recommends defensive actions, stores incidents locally, and provides dashboard, history, detail, deletion, and Markdown report export features.
 
 ## Current Status
 
-Initial full-stack MVP completed.
+Full-stack MVP completed.
 
 The project currently includes:
 
@@ -15,6 +15,14 @@ The project currently includes:
 - Local rule-based log analyzer
 - AI-powered log analyzer using Groq
 - Analyzer mode selector in the frontend
+- Log upload support for `.log` and `.txt` files
+- SQLite incident persistence
+- Incident history page
+- Incident detail page
+- Incident deletion
+- Markdown incident report export
+- Security dashboard
+- Backend tests with pytest
 - Structured JSON responses for security analysis
 
 ## Tech Stack
@@ -30,7 +38,14 @@ The project currently includes:
 - Python
 - FastAPI
 - Pydantic
+- SQLite
 - Groq API
+
+### Testing
+
+- pytest
+- FastAPI TestClient
+- httpx
 
 ### AI
 
@@ -40,12 +55,21 @@ The project currently includes:
 ## Features
 
 - Paste raw logs manually
+- Upload `.log` and `.txt` files
 - Analyze logs using local detection rules
 - Analyze logs using an LLM through Groq
 - Severity classification: low, medium, high, critical
 - Suspicious pattern detection
 - Evidence extraction from log lines
 - Recommended defensive actions
+- Save incident history in SQLite
+- View incident history
+- Filter incidents by severity, analyzer mode, and search text
+- View incident details
+- Delete saved incidents
+- Export incident reports as Markdown
+- Copy incident reports to clipboard
+- View dashboard statistics
 - Responsive cybersecurity dashboard UI
 
 ## Analyzer Modes
@@ -63,6 +87,8 @@ The Local Analyzer is a fast rule-based analyzer that detects common suspicious 
 - Port scan indicators
 - Firewall drops
 - Permission issues
+- Malware indicators
+- Data exfiltration indicators
 
 This mode does not require an API key.
 
@@ -87,6 +113,12 @@ ThreatLens-AI/
 ├── frontend/
 │   └── src/
 │       └── app/
+│           ├── dashboard/
+│           │   └── page.tsx
+│           ├── incidents/
+│           │   ├── page.tsx
+│           │   └── [id]/
+│           │       └── page.tsx
 │           ├── layout.tsx
 │           └── page.tsx
 ├── backend/
@@ -95,12 +127,18 @@ ThreatLens-AI/
 │   │   ├── api/
 │   │   │   └── routes/
 │   │   │       └── analysis.py
+│   │   ├── db/
+│   │   │   └── database.py
 │   │   ├── schemas/
 │   │   │   └── analysis.py
 │   │   └── services/
 │   │       ├── log_analyzer.py
 │   │       └── groq_analyzer.py
+│   ├── tests/
+│   │   ├── test_api.py
+│   │   └── test_log_analyzer.py
 │   ├── .env.example
+│   ├── pytest.ini
 │   └── requirements.txt
 ├── README.md
 └── .gitignore
@@ -156,6 +194,15 @@ Frontend runs at:
 http://localhost:3000
 ```
 
+## Main Frontend Routes
+
+```txt
+/                  Main analyzer page
+/dashboard         Security dashboard
+/incidents         Incident history
+/incidents/[id]    Incident detail and Markdown report export
+```
+
 ## API Endpoints
 
 ### Health Check
@@ -172,7 +219,7 @@ Returns the backend health status.
 POST /api/analyze-log
 ```
 
-Uses the local rule-based analyzer.
+Uses the local rule-based analyzer and saves the result as an incident.
 
 Example request:
 
@@ -188,12 +235,14 @@ Example request:
 POST /api/analyze-log-ai
 ```
 
-Uses the Groq-powered LLM analyzer.
+Uses the Groq-powered LLM analyzer and saves the result as an incident.
 
 Example response:
 
 ```json
 {
+  "id": 1,
+  "analyzer_mode": "ai",
   "severity": "high",
   "summary": "Multiple failed SSH login attempts from a single IP address.",
   "detected_patterns": [
@@ -208,9 +257,57 @@ Example response:
     "Enable rate limiting for SSH login attempts.",
     "Review authentication logs.",
     "Enable multi-factor authentication where possible."
-  ]
+  ],
+  "created_at": "2026-05-04 18:30:00"
 }
 ```
+
+### List Incidents
+
+```txt
+GET /api/incidents
+```
+
+Returns all saved incidents.
+
+### Get Incident Detail
+
+```txt
+GET /api/incidents/{incident_id}
+```
+
+Returns a saved incident, including the original source log.
+
+### Delete Incident
+
+```txt
+DELETE /api/incidents/{incident_id}
+```
+
+Deletes a saved incident.
+
+## Running Backend Tests
+
+From the `backend/` directory:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+python -m pytest -q
+```
+
+The tests cover:
+
+- Health check endpoint
+- Local log analysis
+- Incident creation
+- Incident history
+- Incident detail
+- Incident deletion
+- AI analysis endpoint using a mocked Groq analyzer
+- Rule-based severity detection
+
+The AI endpoint test does not call Groq directly, so it does not consume API requests.
 
 ## Security Notes
 
@@ -219,17 +316,34 @@ Example response:
 - API keys must be stored in environment variables.
 - Never expose API keys in the frontend.
 - Never commit `.env` files.
+- The local SQLite database is ignored by Git.
+- The Groq key is only used in the backend.
+
+## Git Ignore Notes
+
+The project should ignore:
+
+```txt
+backend/.env
+backend/data/
+backend/*.db
+node_modules/
+.next/
+.venv/
+__pycache__/
+```
 
 ## Planned Features
 
-- Incident history
-- SQLite or PostgreSQL persistence
-- Detailed incident pages
-- File upload for `.log` and `.txt` files
-- Export analysis reports
-- Authentication
 - Docker support
-- Tests for backend and frontend
+- Backend service layer cleanup
+- Frontend reusable components
+- Better dashboard charts
+- PDF report export
+- Authentication
+- PostgreSQL support
+- Deployment guide
+- CI workflow with GitHub Actions
 
 ## License
 
