@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { AnalyzerModeBadge } from "@/components/AnalyzerModeBadge";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SeverityBadge } from "@/components/SeverityBadge";
+import { StatCard } from "@/components/StatCard";
+
 type Incident = {
   id: number;
   analyzer_mode: "local" | "ai";
@@ -99,22 +105,6 @@ export default function DashboardPage() {
     stats.severityCounts.low
   );
 
-  function getSeverityStyles(severity: string) {
-    if (severity === "critical") {
-      return "border-red-500 bg-red-500/10 text-red-300";
-    }
-
-    if (severity === "high") {
-      return "border-orange-500 bg-orange-500/10 text-orange-300";
-    }
-
-    if (severity === "medium") {
-      return "border-yellow-500 bg-yellow-500/10 text-yellow-300";
-    }
-
-    return "border-green-500 bg-green-500/10 text-green-300";
-  }
-
   function getRiskMessage() {
     if (stats.total === 0) {
       return "No incident data available yet.";
@@ -155,34 +145,27 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
-        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="mb-2 text-sm text-cyan-300">ThreatLens AI</p>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Security Dashboard
-            </h1>
-            <p className="mt-2 max-w-2xl text-slate-400">
-              Overview of saved log analyses, severity distribution, analyzer
-              usage, and high-risk findings.
-            </p>
-          </div>
+        <PageHeader
+          title="Security Dashboard"
+          description="Overview of saved log analyses, severity distribution, analyzer usage, and high-risk findings."
+          actions={
+            <>
+              <Link
+                href="/incidents"
+                className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              >
+                Incident History
+              </Link>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/incidents"
-              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-            >
-              Incident History
-            </Link>
-
-            <Link
-              href="/"
-              className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              New Analysis
-            </Link>
-          </div>
-        </header>
+              <Link
+                href="/"
+                className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                New Analysis
+              </Link>
+            </>
+          }
+        />
 
         {isLoading && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-slate-400">
@@ -199,29 +182,21 @@ export default function DashboardPage() {
         {!isLoading && !errorMessage && (
           <>
             <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-                <p className="text-sm text-slate-400">Total Incidents</p>
-                <p className="mt-2 text-4xl font-bold">{stats.total}</p>
-              </div>
+              <StatCard label="Total Incidents" value={stats.total} />
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-                <p className="text-sm text-slate-400">High Risk</p>
-                <p className="mt-2 text-4xl font-bold text-orange-300">
-                  {stats.highRiskCount}
-                </p>
-              </div>
+              <StatCard
+                label="High Risk"
+                value={stats.highRiskCount}
+                valueClassName="text-orange-300"
+              />
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-                <p className="text-sm text-slate-400">AI Analyses</p>
-                <p className="mt-2 text-4xl font-bold text-cyan-300">
-                  {stats.aiCount}
-                </p>
-              </div>
+              <StatCard
+                label="AI Analyses"
+                value={stats.aiCount}
+                valueClassName="text-cyan-300"
+              />
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-                <p className="text-sm text-slate-400">Local Analyses</p>
-                <p className="mt-2 text-4xl font-bold">{stats.localCount}</p>
-              </div>
+              <StatCard label="Local Analyses" value={stats.localCount} />
             </section>
 
             <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -250,9 +225,7 @@ export default function DashboardPage() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <div className="rounded-xl border border-cyan-400/40 bg-cyan-400/10 p-5">
                     <p className="text-sm text-cyan-300">AI Analyzer</p>
-                    <p className="mt-2 text-4xl font-bold">
-                      {stats.aiCount}
-                    </p>
+                    <p className="mt-2 text-4xl font-bold">{stats.aiCount}</p>
                   </div>
 
                   <div className="rounded-xl border border-slate-700 bg-slate-950 p-5">
@@ -290,9 +263,7 @@ export default function DashboardPage() {
               </div>
 
               {recentHighRiskIncidents.length === 0 && (
-                <div className="rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6 text-center text-slate-500">
-                  No high-risk incidents saved yet.
-                </div>
+                <EmptyState message="No high-risk incidents saved yet." />
               )}
 
               {recentHighRiskIncidents.length > 0 && (
@@ -305,17 +276,8 @@ export default function DashboardPage() {
                     >
                       <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${getSeverityStyles(
-                              incident.severity
-                            )}`}
-                          >
-                            {incident.severity}
-                          </span>
-
-                          <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase text-slate-300">
-                            {incident.analyzer_mode}
-                          </span>
+                          <SeverityBadge severity={incident.severity} />
+                          <AnalyzerModeBadge mode={incident.analyzer_mode} />
 
                           <span className="text-sm font-semibold text-slate-100">
                             Incident #{incident.id}
@@ -340,4 +302,4 @@ export default function DashboardPage() {
       </section>
     </main>
   );
-}   
+}
