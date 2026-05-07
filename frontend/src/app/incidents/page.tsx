@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { AnalyzerModeBadge } from "@/components/AnalyzerModeBadge";
+import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/PageHeader";
+import { SeverityBadge } from "@/components/SeverityBadge";
+import { StatCard } from "@/components/StatCard";
+
 type Incident = {
   id: number;
   analyzer_mode: "local" | "ai";
@@ -110,26 +116,12 @@ export default function IncidentsPage() {
     (incident) => incident.analyzer_mode === "local"
   ).length;
 
+  const highRiskCount = severityCounts.high + severityCounts.critical;
+
   const hasActiveFilters =
     severityFilter !== "all" ||
     analyzerModeFilter !== "all" ||
     searchQuery.trim().length > 0;
-
-  function getSeverityStyles(severity: string) {
-    if (severity === "critical") {
-      return "border-red-500 bg-red-500/10 text-red-300";
-    }
-
-    if (severity === "high") {
-      return "border-orange-500 bg-orange-500/10 text-orange-300";
-    }
-
-    if (severity === "medium") {
-      return "border-yellow-500 bg-yellow-500/10 text-yellow-300";
-    }
-
-    return "border-green-500 bg-green-500/10 text-green-300";
-  }
 
   function resetFilters() {
     setSeverityFilter("all");
@@ -140,57 +132,44 @@ export default function IncidentsPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-10">
-        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="mb-2 text-sm text-cyan-300">ThreatLens AI</p>
-            <h1 className="text-4xl font-bold tracking-tight">
-              Incident History
-            </h1>
-            <p className="mt-2 max-w-2xl text-slate-400">
-              Review saved log analyses, filter by severity, compare analyzer
-              modes, and inspect extracted security findings.
-            </p>
-          </div>
+        <PageHeader
+          title="Incident History"
+          description="Review saved log analyses, filter by severity, compare analyzer modes, and inspect extracted security findings."
+          actions={
+            <>
+              <Link
+                href="/dashboard"
+                className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                Dashboard
+              </Link>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/dashboard"
-              className="rounded-xl bg-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-            >
-              Dashboard
-            </Link>
-
-            <Link
-              href="/"
-              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
-            >
-              Back to Analyzer
-            </Link>
-          </div>
-        </header>
+              <Link
+                href="/"
+                className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800"
+              >
+                Back to Analyzer
+              </Link>
+            </>
+          }
+        />
 
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm text-slate-400">Total Incidents</p>
-            <p className="mt-2 text-3xl font-bold">{incidents.length}</p>
-          </div>
+          <StatCard label="Total Incidents" value={incidents.length} />
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm text-slate-400">High / Critical</p>
-            <p className="mt-2 text-3xl font-bold text-orange-300">
-              {severityCounts.high + severityCounts.critical}
-            </p>
-          </div>
+          <StatCard
+            label="High / Critical"
+            value={highRiskCount}
+            valueClassName="text-orange-300"
+          />
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm text-slate-400">AI Analyses</p>
-            <p className="mt-2 text-3xl font-bold text-cyan-300">{aiCount}</p>
-          </div>
+          <StatCard
+            label="AI Analyses"
+            value={aiCount}
+            valueClassName="text-cyan-300"
+          />
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p className="text-sm text-slate-400">Local Analyses</p>
-            <p className="mt-2 text-3xl font-bold">{localCount}</p>
-          </div>
+          <StatCard label="Local Analyses" value={localCount} />
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
@@ -292,18 +271,14 @@ export default function IncidentsPage() {
         )}
 
         {!isLoading && !errorMessage && incidents.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900 p-8 text-center text-slate-400">
-            No incidents saved yet. Run an analysis first.
-          </div>
+          <EmptyState message="No incidents saved yet. Run an analysis first." />
         )}
 
         {!isLoading &&
           !errorMessage &&
           incidents.length > 0 &&
           filteredIncidents.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900 p-8 text-center text-slate-400">
-              No incidents match the current filters.
-            </div>
+            <EmptyState message="No incidents match the current filters." />
           )}
 
         {!isLoading && filteredIncidents.length > 0 && (
@@ -324,17 +299,8 @@ export default function IncidentsPage() {
                 <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full border px-3 py-1 text-xs font-bold uppercase ${getSeverityStyles(
-                          incident.severity
-                        )}`}
-                      >
-                        {incident.severity}
-                      </span>
-
-                      <span className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-xs uppercase text-slate-300">
-                        {incident.analyzer_mode}
-                      </span>
+                      <SeverityBadge severity={incident.severity} />
+                      <AnalyzerModeBadge mode={incident.analyzer_mode} />
                     </div>
 
                     <h2 className="text-xl font-semibold">
