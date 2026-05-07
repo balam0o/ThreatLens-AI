@@ -157,9 +157,9 @@ ThreatLens-AI/
 │       │   ├── incidents/
 │       │   │   ├── page.tsx
 │       │   │   └── [id]/
-│       │           └── page.tsx
-│       ├── layout.tsx
-│       ├── page.tsx
+│       │   │       └── page.tsx
+│       │   ├── layout.tsx
+│       │   └── page.tsx
 │       ├── components/
 │       │   ├── AnalysisResultPanel.tsx
 │       │   ├── AnalyzerModeBadge.tsx
