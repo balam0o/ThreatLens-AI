@@ -83,6 +83,28 @@ The project currently includes:
 - Responsive cybersecurity dashboard UI
 - Reusable UI components for badges, headers, stats, empty states, analyzer selector, file upload, and result panels
 
+## Screenshots
+
+### Main Analyzer
+
+![Main Analyzer](docs/screenshots/main-analyzer.png)
+
+### AI Analysis Result
+
+![AI Analysis Result](docs/screenshots/ai-analysis-result.png)
+
+### Incident History
+
+![Incident History](docs/screenshots/incident-history.png)
+
+### Incident Detail
+
+![Incident Detail](docs/screenshots/incident-detail.png)
+
+### Security Dashboard
+
+![Security Dashboard](docs/screenshots/security-dashboard.png)
+
 ## Analyzer Modes
 
 ThreatLens AI currently supports two analysis modes.
