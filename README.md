@@ -22,7 +22,11 @@ The project currently includes:
 - Incident deletion
 - Markdown incident report export
 - Security dashboard
+- Reusable frontend components
 - Backend tests with pytest
+- GitHub Actions CI for backend tests
+- GitHub Actions CI for frontend build
+- Docker support
 - Structured JSON responses for security analysis
 
 ## Tech Stack
@@ -46,6 +50,12 @@ The project currently includes:
 - pytest
 - FastAPI TestClient
 - httpx
+
+### DevOps
+
+- Docker
+- Docker Compose
+- GitHub Actions
 
 ### AI
 
@@ -71,6 +81,7 @@ The project currently includes:
 - Copy incident reports to clipboard
 - View dashboard statistics
 - Responsive cybersecurity dashboard UI
+- Reusable UI components for badges, headers, stats, empty states, analyzer selector, file upload, and result panels
 
 ## Analyzer Modes
 
@@ -110,18 +121,37 @@ This mode requires a Groq API key.
 
 ```txt
 ThreatLens-AI/
+├── .github/
+│   └── workflows/
+│       ├── backend-tests.yml
+│       └── frontend-build.yml
 ├── frontend/
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   └── src/
-│       └── app/
-│           ├── dashboard/
-│           │   └── page.tsx
-│           ├── incidents/
-│           │   ├── page.tsx
-│           │   └── [id]/
-│           │       └── page.tsx
-│           ├── layout.tsx
-│           └── page.tsx
+│       ├── app/
+│       │   ├── dashboard/
+│       │   │   └── page.tsx
+│       │   ├── incidents/
+│       │   │   ├── page.tsx
+│       │   │   └── [id]/
+│       │       └── page.tsx
+│       ├── layout.tsx
+│       │   └── page.tsx
+│       ├── components/
+│       │   ├── AnalysisResultPanel.tsx
+│       │   ├── AnalyzerModeBadge.tsx
+│       │   ├── AnalyzerModeSelector.tsx
+│       │   ├── EmptyState.tsx
+│       │   ├── LogFileUpload.tsx
+│       │   ├── PageHeader.tsx
+│       │   ├── SeverityBadge.tsx
+│       │   └── StatCard.tsx
+│       └── types/
+│           └── analysis.ts
 ├── backend/
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── api/
@@ -140,6 +170,7 @@ ThreatLens-AI/
 │   ├── .env.example
 │   ├── pytest.ini
 │   └── requirements.txt
+├── docker-compose.yml
 ├── README.md
 └── .gitignore
 ```
@@ -192,6 +223,38 @@ Frontend runs at:
 
 ```txt
 http://localhost:3000
+```
+
+## Running with Docker
+
+From the project root:
+
+```powershell
+docker compose up --build
+```
+
+Frontend:
+
+```txt
+http://localhost:3000
+```
+
+Backend:
+
+```txt
+http://localhost:8000
+```
+
+API docs:
+
+```txt
+http://localhost:8000/docs
+```
+
+To stop containers:
+
+```powershell
+docker compose down
 ```
 
 ## Main Frontend Routes
@@ -309,6 +372,20 @@ The tests cover:
 
 The AI endpoint test does not call Groq directly, so it does not consume API requests.
 
+## GitHub Actions
+
+The repository includes CI workflows for:
+
+- Backend tests
+- Frontend production build
+
+Expected workflow files:
+
+```txt
+.github/workflows/backend-tests.yml
+.github/workflows/frontend-build.yml
+```
+
 ## Security Notes
 
 - This project is focused only on defensive cybersecurity.
@@ -333,17 +410,31 @@ node_modules/
 __pycache__/
 ```
 
+## Suggested Demo Flow
+
+1. Open the main analyzer page.
+2. Click `Use sample`.
+3. Run the Local Analyzer.
+4. Run the AI Analyzer.
+5. Open the saved incident.
+6. Export the Markdown report.
+7. Go to Incident History.
+8. Filter by severity or analyzer mode.
+9. Open the Security Dashboard.
+10. Review high-risk incidents and analyzer usage.
+
 ## Planned Features
 
-- Docker support
-- Backend service layer cleanup
-- Frontend reusable components
 - Better dashboard charts
 - PDF report export
 - Authentication
 - PostgreSQL support
 - Deployment guide
-- CI workflow with GitHub Actions
+- Frontend tests
+- CI workflow for Docker build
+- Backend service layer cleanup
+- Better error handling for Groq rate limits
+- User accounts and multi-user incident history
 
 ## License
 
