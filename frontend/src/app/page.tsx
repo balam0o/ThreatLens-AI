@@ -3,18 +3,10 @@
 import Link from "next/link";
 import { type ChangeEvent, useState } from "react";
 
-type AnalysisResponse = {
-  id?: number;
-  analyzer_mode?: "local" | "ai";
-  created_at?: string;
-  severity: string;
-  summary: string;
-  detected_patterns: string[];
-  evidence: string[];
-  recommended_actions: string[];
-};
-
-type AnalyzerMode = "local" | "ai";
+import { AnalysisResultPanel } from "@/components/AnalysisResultPanel";
+import { AnalyzerModeSelector } from "@/components/AnalyzerModeSelector";
+import { LogFileUpload } from "@/components/LogFileUpload";
+import type { AnalysisResponse, AnalyzerMode } from "@/types/analysis";
 
 const sampleLog = `Jan 10 12:01:02 server sshd[1234]: Failed password for root from 185.23.44.10 port 52231 ssh2
 Jan 10 12:01:05 server sshd[1235]: Failed password for root from 185.23.44.10 port 52232 ssh2
@@ -60,9 +52,7 @@ export default function Home() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
 
-        throw new Error(
-          errorData?.detail ?? "The backend returned an error."
-        );
+        throw new Error(errorData?.detail ?? "The backend returned an error.");
       }
 
       const data: AnalysisResponse = await response.json();
@@ -83,6 +73,12 @@ export default function Home() {
   function handleUseSampleLog() {
     setLogText(sampleLog);
     setUploadedFileName("");
+    setAnalysis(null);
+    setErrorMessage("");
+  }
+
+  function handleAnalyzerModeChange(mode: AnalyzerMode) {
+    setAnalyzerMode(mode);
     setAnalysis(null);
     setErrorMessage("");
   }
@@ -123,30 +119,6 @@ export default function Home() {
       setErrorMessage("Could not read the selected file.");
       console.error(error);
     }
-  }
-
-  function getSeverityStyles(severity: string) {
-    const normalizedSeverity = severity.toLowerCase();
-
-    if (normalizedSeverity === "critical") {
-      return "border-red-500 bg-red-50 text-red-700";
-    }
-
-    if (normalizedSeverity === "high") {
-      return "border-orange-500 bg-orange-50 text-orange-700";
-    }
-
-    if (normalizedSeverity === "medium") {
-      return "border-yellow-500 bg-yellow-50 text-yellow-700";
-    }
-
-    return "border-green-500 bg-green-50 text-green-700";
-  }
-
-  function getAnalyzerLabel() {
-    return analyzerMode === "ai"
-      ? "AI Analyzer powered by Groq"
-      : "Local rule-based analyzer";
   }
 
   return (
@@ -206,80 +178,15 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="mb-4 rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <p className="mb-3 text-sm font-medium text-slate-300">
-                Analyzer Mode
-              </p>
+            <AnalyzerModeSelector
+              analyzerMode={analyzerMode}
+              onAnalyzerModeChange={handleAnalyzerModeChange}
+            />
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnalyzerMode("local");
-                    setAnalysis(null);
-                    setErrorMessage("");
-                  }}
-                  className={`rounded-lg border px-4 py-3 text-left transition ${
-                    analyzerMode === "local"
-                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-300"
-                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  <p className="font-semibold">Local Analyzer</p>
-                  <p className="text-xs text-slate-400">
-                    Fast rule-based analysis
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnalyzerMode("ai");
-                    setAnalysis(null);
-                    setErrorMessage("");
-                  }}
-                  className={`rounded-lg border px-4 py-3 text-left transition ${
-                    analyzerMode === "ai"
-                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-300"
-                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
-                  }`}
-                >
-                  <p className="font-semibold">AI Analyzer</p>
-                  <p className="text-xs text-slate-400">
-                    LLM analysis with Groq
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-4 rounded-xl border border-slate-800 bg-slate-950 p-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-300">
-                    Upload Log File
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Supported formats: .log and .txt
-                  </p>
-                </div>
-
-                <label className="cursor-pointer rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-slate-800">
-                  Choose file
-                  <input
-                    type="file"
-                    accept=".log,.txt"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {uploadedFileName && (
-                <p className="mt-3 rounded-lg bg-slate-900 px-3 py-2 text-xs text-cyan-300">
-                  Loaded file: {uploadedFileName}
-                </p>
-              )}
-            </div>
+            <LogFileUpload
+              uploadedFileName={uploadedFileName}
+              onFileUpload={handleFileUpload}
+            />
 
             <textarea
               value={logText}
@@ -308,100 +215,10 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-xl">
-            <h2 className="text-xl font-semibold">Analysis Result</h2>
-            <p className="mb-4 text-sm text-slate-400">
-              Current mode: {getAnalyzerLabel()}.
-            </p>
-
-            {!analysis && (
-              <div className="flex min-h-80 items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950 p-6 text-center text-slate-500">
-                No analysis yet. Paste logs, upload a file, and run the
-                analyzer.
-              </div>
-            )}
-
-            {analysis && (
-              <div className="space-y-5">
-                <div
-                  className={`rounded-xl border px-4 py-3 ${getSeverityStyles(
-                    analysis.severity
-                  )}`}
-                >
-                  <p className="text-sm font-medium">Severity</p>
-                  <p className="text-2xl font-bold uppercase">
-                    {analysis.severity}
-                  </p>
-                </div>
-
-                {analysis.id && (
-                  <Link
-                    href={`/incidents/${analysis.id}`}
-                    className="inline-flex w-full justify-center rounded-xl border border-cyan-400/50 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
-                  >
-                    View Saved Incident #{analysis.id}
-                  </Link>
-                )}
-
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <h3 className="mb-2 font-semibold">Summary</h3>
-                  <p className="text-slate-300">{analysis.summary}</p>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <h3 className="mb-2 font-semibold">Detected Patterns</h3>
-
-                  {analysis.detected_patterns.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.detected_patterns.map((pattern) => (
-                        <span
-                          key={pattern}
-                          className="rounded-full bg-slate-800 px-3 py-1 text-sm text-cyan-300"
-                        >
-                          {pattern}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400">
-                      No suspicious patterns detected.
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <h3 className="mb-2 font-semibold">Evidence</h3>
-
-                  {analysis.evidence.length > 0 ? (
-                    <ul className="space-y-2">
-                      {analysis.evidence.map((item, index) => (
-                        <li
-                          key={`${item}-${index}`}
-                          className="rounded-lg bg-slate-900 p-3 font-mono text-sm text-slate-300"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-slate-400">
-                      No direct evidence lines were extracted.
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <h3 className="mb-2 font-semibold">Recommended Actions</h3>
-
-                  <ul className="list-inside list-disc space-y-2 text-slate-300">
-                    {analysis.recommended_actions.map((action) => (
-                      <li key={action}>{action}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
+          <AnalysisResultPanel
+            analysis={analysis}
+            analyzerMode={analyzerMode}
+          />
         </section>
       </section>
     </main>
